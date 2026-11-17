@@ -16,6 +16,7 @@
     <name>Java Test Modernization Lab</name>
 
     <modules>
+        <module>budget-test-support</module>
         <module>budget-app</module>
     </modules>
 
