@@ -7,6 +7,7 @@ import javax.validation.Valid;
 import dev.municipal.budget.BudgetService;
 import dev.municipal.budget.model.BudgetImport;
 import dev.municipal.budget.model.CityOption;
+import dev.municipal.budget.model.ComparisonFigure;
 import dev.municipal.budget.model.ComparisonRow;
 import dev.municipal.budget.model.KeyFigures;
 import org.springframework.http.HttpStatus;
@@ -49,7 +50,7 @@ public class BudgetApi {
     @GetMapping("/comparison")
     public List<ComparisonRow> compare(@RequestParam("city") List<String> cityCodes,
                                        @RequestParam(defaultValue = "${budget.reporting.default-year}") int year,
-                                       @RequestParam(defaultValue = "spending-per-resident") String figure) {
-        return budgets.compare(cityCodes, year, figure);
+                                       @RequestParam(name = "figure", required = false) String figure) {
+        return budgets.compare(cityCodes, year, ComparisonFigure.fromRequest(figure));
     }
 }

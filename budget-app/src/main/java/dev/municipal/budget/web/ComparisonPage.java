@@ -4,6 +4,8 @@ import java.util.List;
 
 import dev.municipal.budget.BudgetService;
 import dev.municipal.budget.CityNotFoundException;
+import dev.municipal.budget.InvalidComparisonException;
+import dev.municipal.budget.model.ComparisonFigure;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,28 +23,23 @@ public class ComparisonPage {
     @GetMapping("/")
     public String comparison(@RequestParam(name = "city", required = false) List<String> cityCodes,
                              @RequestParam(defaultValue = "${budget.reporting.default-year}") int year,
-                             @RequestParam(defaultValue = "spending-per-resident") String figure,
+                             @RequestParam(name = "figure", required = false) String figureKey,
                              @RequestParam(defaultValue = "false") boolean compare, Model model) {
         List<String> selection = cityCodes == null ? List.of() : cityCodes;
         model.addAttribute("cities", budgets.cities());
         model.addAttribute("selectedCities", selection);
         model.addAttribute("year", year);
-        model.addAttribute("figure", figure);
-        if (compare) {
-            showResults(selection, year, figure, model);
-        }
-        return "comparison";
-    }
-
-    private void showResults(List<String> cityCodes, int year, String figure, Model model) {
-        if (cityCodes.isEmpty()) {
-            model.addAttribute("error", "Select cities to compare.");
-            return;
-        }
+        model.addAttribute("figureOptions", ComparisonFigure.values());
         try {
-            model.addAttribute("rows", budgets.compare(cityCodes, year, figure));
-        } catch (CityNotFoundException exception) {
+            ComparisonFigure figure = ComparisonFigure.fromRequest(figureKey);
+            model.addAttribute("figure", figure.key());
+            if (compare) {
+                model.addAttribute("rows", budgets.compare(selection, year, figure));
+                model.addAttribute("figureLabel", figure.label());
+            }
+        } catch (CityNotFoundException | InvalidComparisonException exception) {
             model.addAttribute("error", exception.getMessage());
         }
+        return "comparison";
     }
 }

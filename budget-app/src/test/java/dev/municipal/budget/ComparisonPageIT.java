@@ -105,7 +105,15 @@ class ComparisonPageIT {
     void submittingWithoutCitiesShowsAnErrorAndNoTable() {
         page.getByRole(AriaRole.BUTTON, name("Compare cities")).click();
 
-        assertThat(page.getByRole(AriaRole.ALERT)).hasText("Select cities to compare.");
+        assertThat(page.getByRole(AriaRole.ALERT)).hasText("Select between 2 and 10 cities.");
+        assertThat(page.getByRole(AriaRole.TABLE)).hasCount(0);
+    }
+
+    @Test
+    void anUnknownCityInASavedComparisonShowsAnError() {
+        page.navigate("http://127.0.0.1:" + port + "/?city=alder&city=unknown&compare=true");
+
+        assertThat(page.getByRole(AriaRole.ALERT)).hasText("City unknown was not found.");
         assertThat(page.getByRole(AriaRole.TABLE)).hasCount(0);
     }
 

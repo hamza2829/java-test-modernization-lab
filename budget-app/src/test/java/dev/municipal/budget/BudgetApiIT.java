@@ -4,6 +4,7 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import dev.municipal.budget.testing.ApiAssertions;
@@ -15,6 +16,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -88,6 +90,22 @@ class BudgetApiIT extends PostgresApiTest {
 
         ApiAssertions.problem(response, 400, "INVALID_QUERY",
                 "Provide the required query parameters in the expected format.");
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {1, 11})
+    void comparisonsRequireBetweenTwoAndTenCities(int numberOfCities) {
+        List<String> codes = IntStream.range(0, numberOfCities).mapToObj(index -> "city-" + index).toList();
+        Response response = given(api()).queryParam("city", codes).get("/comparison");
+
+        ApiAssertions.problem(response, 400, "INVALID_QUERY", "Select between 2 and 10 cities.");
+    }
+
+    @Test
+    void comparisonsRejectBlankCityCodes() {
+        Response response = given(api()).queryParam("city", "alder", " ").get("/comparison");
+
+        ApiAssertions.problem(response, 400, "INVALID_QUERY", "Supply a city code for each selection.");
     }
 
     @ParameterizedTest(name = "{0}")

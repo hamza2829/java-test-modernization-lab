@@ -25,10 +25,10 @@
         <input id="year" name="year" type="number" th:value="${year}" required>
         <label for="figure">Key figure</label>
         <select id="figure" name="figure">
-            <option value="spending-per-resident" th:selected="${figure == 'spending-per-resident'}">
-                Spending per resident
+            <option th:each="option : ${figureOptions}" th:value="${option.key()}"
+                    th:text="${option.label()}" th:selected="${option.key() == figure}">
+                Key figure
             </option>
-            <option value="education-share" th:selected="${figure == 'education-share'}">Education share (%)</option>
         </select>
         <button type="submit">Compare cities</button>
     </form>
@@ -40,9 +40,7 @@
         <thead>
         <tr>
             <th scope="col">City</th>
-            <th scope="col" th:text="${figure == 'spending-per-resident' ? 'Spending per resident' : 'Education share (%)'}">
-                Value
-            </th>
+            <th scope="col" th:text="${figureLabel}">Value</th>
         </tr>
         </thead>
         <tbody>

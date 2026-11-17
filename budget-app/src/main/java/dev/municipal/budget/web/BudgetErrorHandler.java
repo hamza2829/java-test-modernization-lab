@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.List;
 
 import dev.municipal.budget.CityNotFoundException;
+import dev.municipal.budget.InvalidComparisonException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.TypeMismatchException;
@@ -20,6 +21,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 @RestControllerAdvice(assignableTypes = BudgetApi.class)
 public class BudgetErrorHandler {
     private static final Logger LOG = LoggerFactory.getLogger(BudgetErrorHandler.class);
+    private static final String INVALID_QUERY = "INVALID_QUERY";
 
     @ExceptionHandler(CityNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
@@ -46,7 +48,13 @@ public class BudgetErrorHandler {
     @ExceptionHandler({ServletRequestBindingException.class, TypeMismatchException.class})
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ApiError invalidParameters() {
-        return new ApiError("INVALID_QUERY", "Provide the required query parameters in the expected format.");
+        return new ApiError(INVALID_QUERY, "Provide the required query parameters in the expected format.");
+    }
+
+    @ExceptionHandler(InvalidComparisonException.class)
+    @ResponseStatus(HttpStatus.BAD_REQUEST)
+    public ApiError invalidComparison(InvalidComparisonException exception) {
+        return new ApiError(INVALID_QUERY, exception.getMessage());
     }
 
     @ExceptionHandler(DataAccessException.class)

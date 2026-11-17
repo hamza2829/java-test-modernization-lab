@@ -78,26 +78,26 @@ class BudgetCharacterizationIT {
     }
 
     @Test
-    void comparisonRepeatsRowsForDuplicateCityCodes() {
+    void comparisonRejectsDuplicateCityCodes() {
         importCity("alder", 10, "EDUCATION");
         importCity("birch", 20, "EDUCATION");
 
-        ComparisonRow[] rows = client.getForObject(
-                "/api/comparison?city=alder&city=birch&city=alder", ComparisonRow[].class);
+        var response = client.getForEntity("/api/comparison?city=alder&city=birch&city=alder", ApiError.class);
 
-        assertThat(rows).extracting(ComparisonRow::cityCode).containsExactly("alder", "birch", "alder");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isEqualTo(new ApiError("INVALID_QUERY", "Select each city only once."));
     }
 
     @Test
-    void unknownFigureFallsBackToEducationShare() {
+    void unknownFigureReturnsABadRequestInsteadOfAnUnrelatedFigure() {
         importCity("alder", 10, "EDUCATION");
         importCity("birch", 20, "EDUCATION");
 
-        ComparisonRow[] rows = client.getForObject(
-                "/api/comparison?city=alder&city=birch&figure=typo", ComparisonRow[].class);
+        var response = client.getForEntity("/api/comparison?city=alder&city=birch&figure=typo", ApiError.class);
 
-        assertThat(rows[0].value()).isEqualByComparingTo("25.00");
-        assertThat(rows[1].value()).isEqualByComparingTo("25.00");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
+        assertThat(response.getBody()).isEqualTo(new ApiError("INVALID_QUERY",
+                "Choose spending per resident or education share."));
     }
 
     @Test
