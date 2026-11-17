@@ -13,6 +13,7 @@ import dev.municipal.budget.model.KeyFigures;
 import dev.municipal.budget.persistence.BudgetRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 /** Imports budgets and calculates the figures shown to residents. */
 @Service
@@ -57,7 +58,7 @@ public class BudgetService {
             throw new InvalidComparisonException(
                     "Select between " + MIN_COMPARISON_CITIES + " and " + MAX_COMPARISON_CITIES + " cities.");
         }
-        if (cityCodes.stream().anyMatch(code -> code == null || code.isBlank())) {
+        if (!cityCodes.stream().allMatch(StringUtils::hasText)) {
             throw new InvalidComparisonException("Supply a city code for each selection.");
         }
         if (new HashSet<>(cityCodes).size() != cityCodes.size()) {
