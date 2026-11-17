@@ -5,7 +5,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import dev.municipal.budget.model.BudgetImport;
-import dev.municipal.budget.model.BudgetItem;
 import dev.municipal.budget.model.BudgetSnapshot;
 import dev.municipal.budget.model.CityOption;
 import dev.municipal.budget.model.ComparisonRow;
@@ -18,9 +17,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class BudgetService {
     private final BudgetRepository repository;
+    private final FigureCalculator calculator;
 
-    public BudgetService(BudgetRepository repository) {
+    public BudgetService(BudgetRepository repository, FigureCalculator calculator) {
         this.repository = repository;
+        this.calculator = calculator;
     }
 
     @Transactional
@@ -35,17 +36,7 @@ public class BudgetService {
     public KeyFigures figures(String cityCode, int year) {
         BudgetSnapshot budget = repository.findSnapshot(cityCode, year)
                 .orElseThrow(() -> new IllegalArgumentException("Unknown city: " + cityCode));
-        BigDecimal total = BigDecimal.ZERO;
-        BigDecimal education = BigDecimal.ZERO;
-        for (BudgetItem item : budget.items()) {
-            total = total.add(item.amount());
-            if ("EDUCATION".equals(item.category())) {
-                education = education.add(item.amount());
-            }
-        }
-        BigDecimal spending = NumberHelper.divide(total, BigDecimal.valueOf(budget.population()));
-        BigDecimal share = NumberHelper.divide(education.multiply(BigDecimal.valueOf(100)), total);
-        return new KeyFigures(budget.city().code(), budget.city().name(), year, spending, share);
+        return calculator.calculate(budget);
     }
 
     public List<ComparisonRow> compare(List<String> cityCodes, int year, String figure) {
