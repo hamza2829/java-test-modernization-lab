@@ -23,18 +23,30 @@ public class BudgetService {
 
     @Transactional
     public void importBudget(BudgetImport budget) {
+        saveCity(budget.cityCode(), budget.cityName());
+        saveAnnualBudget(budget.cityCode(), budget.year(), budget.population());
+        replaceItems(budget.cityCode(), budget.year(), budget.items());
+    }
+
+    private void saveCity(String cityCode, String cityName) {
         jdbc.update("""
                 INSERT INTO city (code, name) VALUES (?, ?)
                 ON CONFLICT (code) DO UPDATE SET name = EXCLUDED.name
-                """, budget.cityCode(), budget.cityName());
+                """, cityCode, cityName);
+    }
+
+    private void saveAnnualBudget(String cityCode, int year, int population) {
         jdbc.update("""
                 INSERT INTO annual_budget (city_code, budget_year, population) VALUES (?, ?, ?)
                 ON CONFLICT (city_code, budget_year) DO UPDATE SET population = EXCLUDED.population
-                """, budget.cityCode(), budget.year(), budget.population());
-        jdbc.update("DELETE FROM budget_item WHERE city_code = ? AND budget_year = ?", budget.cityCode(), budget.year());
-        for (BudgetItem item : budget.items()) {
+                """, cityCode, year, population);
+    }
+
+    private void replaceItems(String cityCode, int year, List<BudgetItem> items) {
+        jdbc.update("DELETE FROM budget_item WHERE city_code = ? AND budget_year = ?", cityCode, year);
+        for (BudgetItem item : items) {
             jdbc.update("INSERT INTO budget_item (city_code, budget_year, category, amount) VALUES (?, ?, ?, ?)",
-                    budget.cityCode(), budget.year(), item.category(), item.amount());
+                    cityCode, year, item.category(), item.amount());
         }
     }
 
