@@ -1,0 +1,70 @@
+:root {
+    font-family: system-ui, sans-serif;
+    color: #162536;
+    background: #f5f7fa;
+}
+
+main {
+    max-width: 48rem;
+    margin: 3rem auto;
+    padding: 0 1rem;
+}
+
+form {
+    display: grid;
+    gap: 0.8rem;
+    padding: 1.25rem;
+    background: white;
+    border: 1px solid #ccd5df;
+    border-radius: 0.5rem;
+}
+
+fieldset {
+    margin: 0;
+    border: 1px solid #ccd5df;
+}
+
+fieldset label {
+    display: block;
+    margin: 0.35rem 0;
+}
+
+input, select, button {
+    font: inherit;
+    padding: 0.45rem;
+}
+
+button {
+    justify-self: start;
+    color: white;
+    background: #205884;
+    border: 1px solid #205884;
+    border-radius: 0.25rem;
+    cursor: pointer;
+}
+
+table {
+    width: 100%;
+    margin-top: 1.5rem;
+    border-collapse: collapse;
+    background: white;
+    text-align: left;
+}
+
+caption {
+    margin-bottom: 0.5rem;
+    font-weight: bold;
+    text-align: left;
+}
+
+th, td {
+    padding: 0.65rem;
+    border: 1px solid #ccd5df;
+}
+
+[role="alert"] {
+    padding: 0.75rem;
+    background: #ffefed;
+    color: #882721;
+    border-left: 0.25rem solid #882721;
+}

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Municipal budget comparison</title>
+    <link rel="stylesheet" th:href="@{/comparison.css}">
+</head>
+<body>
+<main>
+    <h1>Municipal budget comparison</h1>
+
+    <form method="get" th:action="@{/}">
+        <input type="hidden" name="compare" value="true">
+        <fieldset>
+            <legend>Cities</legend>
+            <p th:if="${#lists.isEmpty(cities)}">Import budgets to add cities to the comparison.</p>
+            <label th:each="city : ${cities}">
+                <input type="checkbox" name="city" th:value="${city.code()}"
+                       th:checked="${selectedCities.contains(city.code())}">
+                <span th:text="${city.name()}">City</span>
+            </label>
+        </fieldset>
+        <label for="year">Budget year</label>
+        <input id="year" name="year" type="number" th:value="${year}" required>
+        <label for="figure">Key figure</label>
+        <select id="figure" name="figure">
+            <option value="spending-per-resident" th:selected="${figure == 'spending-per-resident'}">
+                Spending per resident
+            </option>
+            <option value="education-share" th:selected="${figure == 'education-share'}">Education share (%)</option>
+        </select>
+        <button type="submit">Compare cities</button>
+    </form>
+
+    <p th:if="${error}" th:text="${error}" role="alert"></p>
+
+    <table th:if="${rows != null}">
+        <caption th:text="|Comparison for ${year}|">Comparison</caption>
+        <thead>
+        <tr>
+            <th scope="col">City</th>
+            <th scope="col" th:text="${figure == 'spending-per-resident' ? 'Spending per resident' : 'Education share (%)'}">
+                Value
+            </th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="row : ${rows}">
+            <th scope="row" th:text="${row.cityName()}">City</th>
+            <td th:text="${row.value().toPlainString()}">0.00</td>
+        </tr>
+        </tbody>
+    </table>
+</main>
+</body>
+</html>

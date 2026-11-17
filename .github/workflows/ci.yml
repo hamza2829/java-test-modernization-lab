@@ -1,0 +1,68 @@
+name: Java CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: budget_lab
+          POSTGRES_USER: budget_lab
+          POSTGRES_PASSWORD: budget_lab
+        ports:
+          - '5432:5432'
+        options: >-
+          --health-cmd "pg_isready -U budget_lab -d budget_lab"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build and test with coverage
+        run: |
+          mkdir -p budget-app/target
+          /usr/bin/time -f '%e' -o budget-app/target/test-build-seconds.txt mvn -B -ntp -Pci install
+
+      - name: Analyze production Java
+        run: mvn -B -ntp -pl budget-app -Pquality spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
+
+      - name: Summarize measured results
+        run: |
+          java ci/Metrics.java budget-app/target | tee budget-app/target/metrics.md
+          cat budget-app/target/metrics.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload reports and browser screenshots
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: verification-reports
+          path: |
+            budget-app/target/metrics.md
+            budget-app/target/test-build-seconds.txt
+            budget-app/target/surefire-reports/
+            budget-app/target/failsafe-reports/
+            budget-app/target/site/
+            budget-app/target/spotbugsXml.xml
+            budget-app/target/checkstyle-result.xml
+            budget-app/target/pmd.xml
+            budget-app/target/cpd.xml
+            budget-app/target/screenshots/
+          if-no-files-found: warn
