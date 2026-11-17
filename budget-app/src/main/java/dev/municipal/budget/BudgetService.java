@@ -88,34 +88,10 @@ public class BudgetService {
     public List<ComparisonRow> compare(List<String> cityCodes, int year, String figure) {
         List<ComparisonRow> result = new ArrayList<>();
         for (String cityCode : cityCodes) {
-            List<Map<String, Object>> rows = jdbc.queryForList("""
-                    SELECT c.name, b.population, i.category, i.amount
-                    FROM city c
-                    LEFT JOIN annual_budget b ON c.code = b.city_code AND b.budget_year = ?
-                    LEFT JOIN budget_item i ON b.city_code = i.city_code AND b.budget_year = i.budget_year
-                    WHERE c.code = ?
-                    ORDER BY i.id
-                    """, year, cityCode);
-            if (rows.isEmpty()) {
-                throw new IllegalArgumentException("Unknown city: " + cityCode);
-            }
-            BigDecimal total = BigDecimal.ZERO;
-            BigDecimal education = BigDecimal.ZERO;
-            for (Map<String, Object> row : rows) {
-                BigDecimal amount = (BigDecimal) row.get("amount");
-                if (amount != null) {
-                    total = total.add(amount);
-                    if ("EDUCATION".equals(row.get("category"))) {
-                        education = education.add(amount);
-                    }
-                }
-            }
-            Map<String, Object> first = rows.get(0);
-            int population = first.get("population") == null ? 0 : (Integer) first.get("population");
-            BigDecimal spending = NumberHelper.divide(total, BigDecimal.valueOf(population));
-            BigDecimal share = NumberHelper.divide(education.multiply(BigDecimal.valueOf(100)), total);
-            BigDecimal value = "spending-per-resident".equals(figure) ? spending : share;
-            result.add(new ComparisonRow(cityCode, (String) first.get("name"), value));
+            KeyFigures figures = figures(cityCode, year);
+            BigDecimal value = "spending-per-resident".equals(figure)
+                    ? figures.spendingPerResident() : figures.educationShare();
+            result.add(new ComparisonRow(figures.cityCode(), figures.cityName(), value));
         }
         return result;
     }
