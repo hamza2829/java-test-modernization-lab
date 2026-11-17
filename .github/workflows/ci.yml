@@ -10,6 +10,10 @@ on:
 permissions:
   contents: read
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   verify:
     runs-on: ubuntu-24.04
@@ -30,6 +34,8 @@ jobs:
           --health-retries 10
     steps:
       - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
@@ -41,6 +47,18 @@ jobs:
           mkdir -p budget-app/target
           /usr/bin/time -f '%e' -o budget-app/target/test-build-seconds.txt mvn -B -ntp -Pci install
 
+      - name: Smoke-test the packaged demo
+        run: |
+          java -jar budget-app/target/budget-app-1.0.0-SNAPSHOT.jar --spring.profiles.active=demo \
+            --server.address=127.0.0.1 > budget-app/target/demo.log 2>&1 &
+          demo_pid=$!
+          trap 'kill "$demo_pid" 2>/dev/null || true' EXIT
+          curl --fail --silent --show-error --retry 30 --retry-delay 1 --retry-connrefused \
+            'http://127.0.0.1:8080/?compare=true&city=alder-harbor&city=birch-falls' \
+            --output budget-app/target/demo-comparison.html
+          grep -Fq '<td>100.00</td>' budget-app/target/demo-comparison.html
+          grep -Fq '<td>125.00</td>' budget-app/target/demo-comparison.html
+
       - name: Analyze production Java
         run: mvn -B -ntp -pl budget-app -Pquality spotbugs:spotbugs checkstyle:checkstyle pmd:pmd pmd:cpd
 
@@ -51,7 +69,7 @@ jobs:
 
       - name: Upload reports and browser screenshots
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: verification-reports
           path: |
@@ -64,5 +82,6 @@ jobs:
             budget-app/target/checkstyle-result.xml
             budget-app/target/pmd.xml
             budget-app/target/cpd.xml
+            budget-app/target/demo.log
             budget-app/target/screenshots/
           if-no-files-found: warn
