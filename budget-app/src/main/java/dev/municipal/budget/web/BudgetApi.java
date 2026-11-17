@@ -5,8 +5,9 @@ import java.util.List;
 import dev.municipal.budget.BudgetService;
 import dev.municipal.budget.model.BudgetImport;
 import dev.municipal.budget.model.CityOption;
+import dev.municipal.budget.model.ComparisonRow;
+import dev.municipal.budget.model.KeyFigures;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -38,23 +39,15 @@ public class BudgetApi {
     }
 
     @GetMapping("/cities/{code}/figures")
-    public ResponseEntity<?> figures(@PathVariable String code,
-                                     @RequestParam(defaultValue = "${budget.reporting.default-year}") int year) {
-        try {
-            return ResponseEntity.ok(budgets.figures(code, year));
-        } catch (RuntimeException exception) {
-            return ResponseEntity.badRequest().body("Could not load figures");
-        }
+    public KeyFigures figures(@PathVariable String code,
+                              @RequestParam(defaultValue = "${budget.reporting.default-year}") int year) {
+        return budgets.figures(code, year);
     }
 
     @GetMapping("/comparison")
-    public ResponseEntity<?> compare(@RequestParam("city") List<String> cityCodes,
-                                     @RequestParam(defaultValue = "${budget.reporting.default-year}") int year,
-                                     @RequestParam(defaultValue = "spending-per-resident") String figure) {
-        try {
-            return ResponseEntity.ok(budgets.compare(cityCodes, year, figure));
-        } catch (RuntimeException exception) {
-            return ResponseEntity.badRequest().body("Could not compare cities");
-        }
+    public List<ComparisonRow> compare(@RequestParam("city") List<String> cityCodes,
+                                       @RequestParam(defaultValue = "${budget.reporting.default-year}") int year,
+                                       @RequestParam(defaultValue = "spending-per-resident") String figure) {
+        return budgets.compare(cityCodes, year, figure);
     }
 }

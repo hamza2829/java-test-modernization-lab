@@ -35,7 +35,7 @@ public class BudgetService {
 
     public KeyFigures figures(String cityCode, int year) {
         BudgetSnapshot budget = repository.findSnapshot(cityCode, year)
-                .orElseThrow(() -> new IllegalArgumentException("Unknown city: " + cityCode));
+                .orElseThrow(() -> new CityNotFoundException(cityCode));
         return calculator.calculate(budget);
     }
 

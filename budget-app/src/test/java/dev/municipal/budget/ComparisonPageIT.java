@@ -105,7 +105,7 @@ class ComparisonPageIT {
     void submittingWithoutCitiesShowsAnErrorAndNoTable() {
         page.getByRole(AriaRole.BUTTON, name("Compare cities")).click();
 
-        assertThat(page.getByRole(AriaRole.ALERT)).hasText("Could not compare cities");
+        assertThat(page.getByRole(AriaRole.ALERT)).hasText("Select cities to compare.");
         assertThat(page.getByRole(AriaRole.TABLE)).hasCount(0);
     }
 

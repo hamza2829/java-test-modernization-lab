@@ -65,15 +65,22 @@ class BudgetApiIT extends PostgresApiTest {
 
         Response response = given(api()).queryParam("city", "alder", "unknown").get("/comparison");
 
-        ApiAssertions.status(response, 400);
-        assertThat(response.asString()).isEqualTo("Could not compare cities");
+        ApiAssertions.problem(response, 404, "CITY_NOT_FOUND", "City unknown was not found.");
     }
 
     @Test
     void rejectsMalformedImportJson() {
         Response response = given(api()).contentType(ContentType.JSON).body("{").post("/budgets");
 
-        ApiAssertions.status(response, 400);
+        ApiAssertions.problem(response, 400, "INVALID_BODY", "Send a valid budget import JSON object.");
+    }
+
+    @Test
+    void figuresRejectANonIntegerYear() {
+        Response response = given(api()).queryParam("year", "this-year").get("/cities/alder/figures");
+
+        ApiAssertions.problem(response, 400, "INVALID_QUERY",
+                "Provide the required query parameters in the expected format.");
     }
 
     @Test
@@ -85,7 +92,7 @@ class BudgetApiIT extends PostgresApiTest {
             Response failure = sendBudget(new BudgetImportBuilder("alder", "Renamed city")
                     .withPopulation(5).item("PARKS", "40.00").item("DENIED", "60.00").build());
 
-            ApiAssertions.status(failure, 500);
+            ApiAssertions.problem(failure, 500, "STORAGE_FAILURE", "The budget could not be read or saved.");
             Response figures = figuresFor("alder", 2024);
             FigureAssertions.figures(figures, "alder", 2024, "50.00", "100.00");
             assertThat(figures.jsonPath().getString("cityName")).isEqualTo("Alder Harbor");

@@ -7,6 +7,7 @@ import dev.municipal.budget.model.BudgetImport;
 import dev.municipal.budget.model.BudgetItem;
 import dev.municipal.budget.model.ComparisonRow;
 import dev.municipal.budget.model.KeyFigures;
+import dev.municipal.budget.web.ApiError;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -99,11 +100,11 @@ class BudgetCharacterizationIT {
     }
 
     @Test
-    void unknownCityReturnsGenericBadRequest() {
-        var response = client.getForEntity("/api/cities/unknown/figures", String.class);
+    void unknownCityReturnsAnExplicitNotFoundError() {
+        var response = client.getForEntity("/api/cities/unknown/figures", ApiError.class);
 
-        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST);
-        assertThat(response.getBody()).isEqualTo("Could not load figures");
+        assertThat(response.getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
+        assertThat(response.getBody()).isEqualTo(new ApiError("CITY_NOT_FOUND", "City unknown was not found."));
     }
 
     private void importCity(String code, int population, String category) {

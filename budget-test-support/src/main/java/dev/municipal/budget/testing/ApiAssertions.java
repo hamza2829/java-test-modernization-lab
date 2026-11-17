@@ -19,6 +19,14 @@ public final class ApiAssertions {
                 .isEqualTo(expected);
     }
 
+    public static void problem(Response response, int expectedStatus, String code, String message) {
+        status(response, expectedStatus);
+        assertThat(response.contentType()).as("error content type").startsWith("application/json");
+        JsonPath json = response.jsonPath();
+        assertThat(json.getString("code")).as("error code").isEqualTo(code);
+        assertThat(json.getString("message")).as("error message for %s", code).isEqualTo(message);
+    }
+
     public static void comparisonRow(Response response, int index, String cityCode, String value) {
         status(response, 200);
         JsonPath json = numbersAsDecimals(response);
