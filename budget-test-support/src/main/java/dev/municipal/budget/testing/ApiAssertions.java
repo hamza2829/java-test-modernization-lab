@@ -27,6 +27,13 @@ public final class ApiAssertions {
         assertThat(json.getString("message")).as("error message for %s", code).isEqualTo(message);
     }
 
+    public static void invalidBudgetField(Response response, String field) {
+        problem(response, 400, "INVALID_BUDGET", "Budget import has invalid fields.");
+        assertThat(response.jsonPath().getList("fields.field", String.class))
+                .as("invalid fields in response body <%s>", response.asString())
+                .contains(field);
+    }
+
     public static void comparisonRow(Response response, int index, String cityCode, String value) {
         status(response, 200);
         JsonPath json = numbersAsDecimals(response);

@@ -2,6 +2,8 @@ package dev.municipal.budget.web;
 
 import java.util.List;
 
+import javax.validation.Valid;
+
 import dev.municipal.budget.BudgetService;
 import dev.municipal.budget.model.BudgetImport;
 import dev.municipal.budget.model.CityOption;
@@ -29,7 +31,7 @@ public class BudgetApi {
 
     @PostMapping("/budgets")
     @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void importBudget(@RequestBody BudgetImport budget) {
+    public void importBudget(@Valid @RequestBody BudgetImport budget) {
         budgets.importBudget(budget);
     }
 

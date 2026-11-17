@@ -44,8 +44,9 @@ class BudgetCharacterizationIT {
     }
 
     @Test
-    void acceptsZeroPopulationAndReportsZeroSpendingPerResident() {
-        importCity("alder", 0, "EDUCATION");
+    void existingZeroPopulationStillReportsZeroSpendingPerResident() {
+        importCity("alder", 10, "EDUCATION");
+        jdbc.update("UPDATE annual_budget SET population = 0 WHERE city_code = ? AND budget_year = ?", "alder", 2024);
 
         KeyFigures figures = client.getForObject("/api/cities/alder/figures", KeyFigures.class);
 

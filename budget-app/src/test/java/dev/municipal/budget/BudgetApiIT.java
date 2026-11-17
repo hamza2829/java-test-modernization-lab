@@ -1,6 +1,10 @@
 package dev.municipal.budget;
 
+import java.math.BigDecimal;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import dev.municipal.budget.testing.ApiAssertions;
 import dev.municipal.budget.testing.BudgetImportBuilder;
@@ -8,6 +12,9 @@ import dev.municipal.budget.testing.FigureAssertions;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
 
@@ -81,6 +88,45 @@ class BudgetApiIT extends PostgresApiTest {
 
         ApiAssertions.problem(response, 400, "INVALID_QUERY",
                 "Provide the required query parameters in the expected format.");
+    }
+
+    @ParameterizedTest(name = "{0}")
+    @MethodSource("invalidImports")
+    void invalidImportsLeaveExistingDataUntouched(String scenario, String key, Object value, String field) {
+        importBudget(new BudgetImportBuilder("alder", "Alder Harbor").item("EDUCATION", "100.00"));
+        Map<String, Object> replacement = new BudgetImportBuilder("alder", "Renamed city").item("PARKS", "1.00").build();
+        replacement.put(key, value);
+
+        ApiAssertions.invalidBudgetField(sendBudget(replacement), field);
+        FigureAssertions.figures(figuresFor("alder", 2024), "alder", 2024, "0.10", "100.00");
+        assertThat(given(api()).get("/cities").jsonPath().getList("name", String.class))
+                .as("catalog after rejected import: %s", scenario)
+                .containsExactly("Alder Harbor");
+    }
+
+    static Stream<Arguments> invalidImports() {
+        return Stream.of(
+                Arguments.of("non-slug city code", "cityCode", "bad code", "cityCode"),
+                Arguments.of("blank city name", "cityName", " ", "cityName"),
+                Arguments.of("zero population", "population", 0, "population"),
+                Arguments.of("year outside range", "year", 1999, "year"),
+                Arguments.of("empty items", "items", List.of(), "items"),
+                Arguments.of("null item", "items", Collections.singletonList(null), "items[0]"),
+                Arguments.of("blank category", "items", List.of(Map.of("category", " ", "amount", 1)),
+                        "items[0].category"),
+                Arguments.of("missing amount", "items", List.of(Map.of("category", "PARKS")), "items[0].amount"),
+                Arguments.of("negative amount", "items", List.of(Map.of("category", "PARKS", "amount", -1)),
+                        "items[0].amount"),
+                Arguments.of("amount exceeds database precision", "items",
+                        List.of(Map.of("category", "PARKS", "amount", new BigDecimal("1.001"))), "items[0].amount"));
+    }
+
+    @Test
+    void fractionalPopulationCannotBeSilentlyTruncated() {
+        Map<String, Object> budget = new BudgetImportBuilder("alder", "Alder Harbor").item("EDUCATION", "1.00").build();
+        budget.put("population", new BigDecimal("2.5"));
+
+        ApiAssertions.problem(sendBudget(budget), 400, "INVALID_BODY", "Send a valid budget import JSON object.");
     }
 
     @Test
