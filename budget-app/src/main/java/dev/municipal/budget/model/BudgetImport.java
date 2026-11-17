@@ -1,5 +1,7 @@
 package dev.municipal.budget.model;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.validation.Valid;
@@ -29,4 +31,11 @@ public record BudgetImport(
         @NotEmpty @Size(max = 200) List<@NotNull @Valid BudgetItem> items) {
     public static final int FIRST_SUPPORTED_YEAR = 2000;
     public static final int LAST_SUPPORTED_YEAR = 2100;
+
+    public BudgetImport {
+        if (items != null) {
+            // Keep null elements visible to request validation so it can report their exact positions.
+            items = Collections.unmodifiableList(new ArrayList<>(items));
+        }
+    }
 }
