@@ -19,7 +19,7 @@ public class ComparisonPage {
 
     @GetMapping("/")
     public String comparison(@RequestParam(name = "city", required = false) List<String> cityCodes,
-                             @RequestParam(defaultValue = "2024") int year,
+                             @RequestParam(defaultValue = "${budget.reporting.default-year}") int year,
                              @RequestParam(defaultValue = "spending-per-resident") String figure,
                              @RequestParam(defaultValue = "false") boolean compare, Model model) {
         model.addAttribute("cities", budgets.cities());

@@ -38,7 +38,8 @@ public class BudgetApi {
     }
 
     @GetMapping("/cities/{code}/figures")
-    public ResponseEntity<?> figures(@PathVariable String code, @RequestParam(defaultValue = "2024") int year) {
+    public ResponseEntity<?> figures(@PathVariable String code,
+                                     @RequestParam(defaultValue = "${budget.reporting.default-year}") int year) {
         try {
             return ResponseEntity.ok(budgets.figures(code, year));
         } catch (RuntimeException exception) {
@@ -48,7 +49,7 @@ public class BudgetApi {
 
     @GetMapping("/comparison")
     public ResponseEntity<?> compare(@RequestParam("city") List<String> cityCodes,
-                                     @RequestParam(defaultValue = "2024") int year,
+                                     @RequestParam(defaultValue = "${budget.reporting.default-year}") int year,
                                      @RequestParam(defaultValue = "spending-per-resident") String figure) {
         try {
             return ResponseEntity.ok(budgets.compare(cityCodes, year, figure));
